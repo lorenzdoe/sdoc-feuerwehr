@@ -1,0 +1,42 @@
+version: '3.1'
+
+services:
+  db:
+    image: mysql:8.3.0
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: feuerwehr
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d
+
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      PMA_HOST: db
+
+  backend:
+    image: lorenzdoe/edok-backend:latest
+    restart: always
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USERNAME: fw_admin
+      DB_PASSWORD: fw_password
+      DB_NAME: fw_db
+      SECRET_KEY: 09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
+
+  frontend: 
+    image: lorenzdoe/edok-frontend:latest
+    restart: always
+    ports: 
+      - 80:80
+    depends_on:
+      - backend
