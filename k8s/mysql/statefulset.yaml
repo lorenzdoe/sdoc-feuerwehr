@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+spec:
+  serviceName: "mysql"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.4.0
+        ports:
+        - containerPort: 3306
+          name: web
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+        - name: init-db
+          subPath: init_db.sql
+          mountPath: /docker-entrypoint-initdb.d/init_db.sql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-root-pw
+              key: password
+      volumes:
+      - name: init-db
+        configMap:
+          name: initdb-script
+          items:
+          - key: init_db.sql
+            path: init_db.sql
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteMany"]
+      resources:
+        requests:
+          storage: 5Gi
